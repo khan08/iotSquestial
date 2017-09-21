@@ -9,7 +9,7 @@ AWS.config.update({region: 'us-west-2'})
 const iotData = new AWS.IotData({endpoint: 'a2wfi15g6zmios.iot.us-west-2.amazonaws.com'})
 /* GET home page. */
 router.post('/', function(req, res, next) {
-  console.log(req.body);
+  //console.log(req.body);
   var sensorData = req.body
   queue.push(
     function(task) {
@@ -22,7 +22,7 @@ router.post('/', function(req, res, next) {
         task.done();
       })
       .catch(function (err) {
-        console.log(err, err.stack)
+        console.log(err)
         //callback(err)
         task.done();
       })
@@ -30,7 +30,7 @@ router.post('/', function(req, res, next) {
     function() {
       console.log('task timeout');
     }, 
-    3000
+    30000
   );
   res.end();
 });
@@ -52,10 +52,10 @@ function publishData (data, resolve, reject) {
   sensorIds.forEach(function (sensorId) {
     var sensorData = readings[sensorId]
     if(!(sensorData.hasOwnProperty('Temperature'))){
-       console.log('=============Current')
+       console.log('=============Current' + sensorData)
        current[sensorId] = sensorData
     } else {
-      console.log('==============TempData')
+      console.log('==============TempData ' + sensorData['Temperature'])
       temperature[sensorId] = sensorData
     }
   })
@@ -70,17 +70,17 @@ function publishData (data, resolve, reject) {
   payloadTemperature['Raw Timestamp'] = rawTimestamp
   payloadTemperature.SensorReadings = temperature
 
-  if( payloadCurrent.SensorReadings === {}) {
   console.log(payloadCurrent)
-    new Promise(function (resolve, reject) {
-      publishCurrentData (payloadCurrent, resolve, reject)
-    })
+  if( payloadCurrent.SensorReadings === {}) {
+    console.log(payloadCurrent)
+    publishCurrentData (payloadCurrent, resolve, reject)
   }
-  if( payloadTemperature.SensorReadings === {}) {
-  console.log(payloadTemperature)
-    new Promise(function (resolve, reject) {
-      publishTemperatureData (payloadTemperature, resolve, reject)
-    })
+  else if( payloadTemperature.SensorReadings === {}) {
+    console.log(payloadTemperature)
+    publishTemperatureData (payloadTemperature, resolve, reject)
+  }
+  else{
+    reject("data invalid");
   }
 
 }
