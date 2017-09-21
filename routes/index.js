@@ -8,27 +8,29 @@ const AWS = require("aws-sdk")
 AWS.config.update({region: 'us-west-2'})
 const iotData = new AWS.IotData({endpoint: 'a2wfi15g6zmios.iot.us-west-2.amazonaws.com'})
 /* GET home page. */
-router.get('/', function(req, res, next) {
+router.post('/', function(req, res, next) {
+  console.log(req.body);
+  var sensorData = req.body
   queue.push(
     function(task) {
-      setTimeout(function() {
-        console.log('hello ');
+      new Promise(function (resolve, reject) {
+        publishData(sensorData, resolve, reject)
+      })
+      .then(function (results) {
+        console.log('====================== results: ' + JSON.stringify(results))
+        //callback(null, 'OK')
         task.done();
-      }, 5000);
+      })
+      .catch(function (err) {
+        console.log(err, err.stack)
+        //callback(err)
+        task.done();
+      })
     }, 
     function() {
       console.log('task timeout');
     }, 
-    6000
-  );
-   
-  queue.push(
-    function(task) {
-      setTimeout(function() {
-        console.log('world~');
-        task.done();
-      }, 500);
-    }
+    3000
   );
   res.end();
 });
